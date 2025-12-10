@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, h } from 'vue'
-import { darkTheme, NConfigProvider, NSplit, NMessageProvider, NCard, NFlex, NButton, NIcon, NButtonGroup, NDropdown, NModal, NText, NDivider, NTag } from 'naive-ui'
+import { darkTheme, NConfigProvider, NSplit, NMessageProvider, NCard, NFlex, NButton, NIcon, NDropdown, NModal, NText, NDivider, NTag } from 'naive-ui'
 import ProcessView from './views/ProcessView.vue'
 import DetailView from './views/DetailView.vue'
 import TextSearchView from './views/TextSearchView.vue'
@@ -43,7 +43,6 @@ const handleViewModeSelect = (key: string) => {
 }
 
 const splitSize = ref(0.6)
-const splitVerticalSize = ref(0.5)  // 分屏模式的垂直分割比例
 const parser = new LogParser()
 const tasks = ref<TaskInfo[]>([])
 const selectedTask = ref<TaskInfo | null>(null)
@@ -97,17 +96,6 @@ const themeOverrides = {
   }
 }
 
-// 统计数据
-const statistics = computed(() => {
-  if (!tasks.value.length) return null
-  return parser.getStatistics()
-})
-
-// 性能数据
-const performanceData = computed(() => {
-  if (!tasks.value.length) return []
-  return parser.getPerformanceData()
-})
 
 // 处理文件上传（Web）
 const handleFileUpload = async (file: File) => {
@@ -235,13 +223,6 @@ const handleSelectOperation = (node: NodeInfo, opIndex: number) => {
                     </n-icon>
                   </template>
                   {{ currentViewLabel }}
-                  <template #icon-right>
-                    <n-icon style="margin-left: 4px">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M7 10l5 5l5-5z"/>
-                      </svg>
-                    </n-icon>
-                  </template>
                 </n-button>
               </n-dropdown>
             </n-flex>

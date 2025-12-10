@@ -13,8 +13,6 @@ const emit = defineEmits<{
   'select-operation': [node: NodeInfo, opIndex: number]
 }>()
 
-const showDetails = ref(false)
-
 // 节点状态样式
 const cardClass = computed(() => {
   return `node-card node-card-${props.node.status}`
@@ -164,7 +162,7 @@ const formatNextName = (item: any) => {
             v-for="(op, idx) in operations"
             :key="idx"
             size="small"
-            :type="op.status"
+            :type="op.status as 'success' | 'error' | 'warning'"
             ghost
             @click.stop="handleOperationClick(idx)"
           >

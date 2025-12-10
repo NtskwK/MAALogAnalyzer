@@ -37,6 +37,8 @@ export interface NodeInfo {
   entries: LogEntry[]  // 原始日志条目
   jump_back?: boolean  // 是否为跳转返回节点
   anchor?: boolean     // 是否为锚点节点
+  recognitionDetails?: RecognitionDetail[]
+  actionDetails?: ActionDetail[]
 }
 
 // 操作信息
@@ -49,13 +51,25 @@ export interface ActionInfo {
   details?: Record<string, any>
 }
 
+// 识别详情
+export interface RecognitionDetail {
+  box?: [number, number, number, number]
+  score?: number
+  [key: string]: any
+}
+
+// 动作详情
+export interface ActionDetail {
+  [key: string]: any
+}
+
 // 合并后的操作信息（识别 + 动作）
 export interface OperationInfo {
   index: number
   name: string
   status: 'success' | 'warning' | 'error'
-  recognition?: ActionInfo
-  action?: ActionInfo
+  recognition?: ActionInfo | null
+  action?: ActionInfo | null
   recognitionDetail?: RecognitionDetail
   actionDetail?: ActionDetail
 }
