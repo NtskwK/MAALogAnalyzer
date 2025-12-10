@@ -1,0 +1,77 @@
+name: 自动构建和发布
+
+on:
+  push:
+    tags:
+      - 'v*' # 推送 tag 时触发，如 v1.0.0
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, ubuntu-22.04, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装 Rust 稳定版
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: 获取 pnpm store 目录
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: 设置 pnpm 缓存
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: 安装 Ubuntu 依赖
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: 安装前端依赖
+        run: pnpm install
+
+      - name: 构建应用
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'MAA 日志分析器 ${{ github.ref_name }}'
+          releaseBody: |
+            ## 📦 下载说明
+            
+            - **Windows**: 下载 `.msi` 或 `.exe` 安装包
+            - **macOS**: 下载 `.dmg` 或 `.app.tar.gz` 文件
+            - **Linux**: 下载 `.AppImage` 或 `.deb` 文件
+            
+            ### 更新内容
+            请查看 [提交历史](https://github.com/${{ github.repository }}/commits/${{ github.ref_name }})
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.platform == 'macos-latest' && '--target universal-apple-darwin' || '' }}
+
