@@ -74,8 +74,8 @@ const handleFileUpload = async (file: File) => {
     const content = await file.text()
     processLogContent(content)
   } catch (error) {
-    console.error('文件解析失败:', error)
-    alert('文件解析失败: ' + error)
+    console.error(error)
+    alert(error)
   } finally {
     loading.value = false
   }
@@ -87,8 +87,8 @@ const handleContentUpload = (content: string) => {
   try {
     processLogContent(content)
   } catch (error) {
-    console.error('文件解析失败:', error)
-    alert('文件解析失败: ' + error)
+    console.error(error)
+    alert(error)
   } finally {
     loading.value = false
   }

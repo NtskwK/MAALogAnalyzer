@@ -27,6 +27,10 @@ export class LogParser {
         entry._line = lineNum
         entries.push(entry)
       } catch (e) {
+        // 如果是第一行解析失败，直接抛出错误
+        if (lineNum === 1) {
+          throw new Error(`第 1 行解析失败: ${e instanceof Error ? e.message : String(e)}`)
+        }
         console.warn(`解析第 ${lineNum} 行失败:`, e)
       }
     }
