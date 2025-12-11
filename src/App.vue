@@ -98,13 +98,8 @@ const handleContentUpload = (content: string) => {
 
 // 处理日志内容
 const processLogContent = (content: string) => {
-  let entries
-  try {
-    entries = parser.parseFile(content)
-  } catch (error) {
-    message.error(getErrorMessage(error), { duration: 5000 })
-    return
-  }
+  // 移除内部 try-catch，让错误抛出给调用方（handleFileUpload/handleContentUpload）统一处理
+  const entries = parser.parseFile(content)
   
   if (entries.length === 0) {
     console.warn('未找到有效的日志记录')
