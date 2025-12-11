@@ -6,8 +6,8 @@
     "devPath": "http://localhost:5173",
     "distDir": "../dist"
   },
-  "package": {
-    "productName": "MAA 日志分析器",
+    "package": {
+    "productName": "MAALogAnalyzer",
     "version": "1.0.0"
   },
   "tauri": {
@@ -45,9 +45,9 @@
         "icons/icon.ico"
       ],
       "identifier": "com.maa.log-analyzer",
-      "longDescription": "MAA Framework Sink 日志可视化分析工具，提供任务流程分析、性能统计、失败诊断等功能。",
-      "shortDescription": "MAA 日志分析工具",
-      "targets": "all",
+      "longDescription": "MAA Framework Sink log visualization analysis tool, providing task flow analysis, performance statistics, and failure diagnosis.",
+      "shortDescription": "MAA Log Analyzer",
+      "targets": ["nsis", "dmg", "appimage", "deb"],
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
@@ -62,7 +62,7 @@
     },
     "windows": [
       {
-        "title": "MAA 日志分析器",
+        "title": "MAALogAnalyzer",
         "width": 1400,
         "height": 900,
         "minWidth": 800,
