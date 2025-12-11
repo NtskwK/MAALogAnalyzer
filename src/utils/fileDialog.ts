@@ -140,6 +140,3 @@ export async function getAppInfo(): Promise<{ version: string; tauriVersion: str
   }
   return null
 }
-
-
-

@@ -45,7 +45,7 @@
         "icons/icon.ico"
       ],
       "identifier": "com.maa.log-analyzer",
-      "longDescription": "MAA Framework Sink log visualization analysis tool, providing task flow analysis, performance statistics, and failure diagnosis.",
+      "longDescription": "MAA Framework Sink log visualization analysis tool, providing task flow analysis, and failure diagnosis.",
       "shortDescription": "MAA Log Analyzer",
       "targets": ["nsis", "dmg", "appimage", "deb"],
       "windows": {
@@ -77,6 +77,3 @@
     ]
   }
 }
-
-
-

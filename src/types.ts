@@ -86,14 +86,3 @@ export interface Statistics {
     end: string
   }
 }
-
-// 性能数据
-export interface PerformanceData {
-  operation: string
-  duration: number
-  count: number
-  avgDuration: number
-}
-
-
-
