@@ -166,7 +166,7 @@ jobs:
           path: artifacts/
 
       - name: 显示下载的文件
-        run: find artifacts/ -type f -name "*.deb" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.dmg" -o -name "*.app.tar.gz"
+        run: find artifacts/ -type f \( -name "*.deb" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.dmg" -o -name "*.app.tar.gz" \)
 
       - name: 创建 Release
         uses: softprops/action-gh-release@v1
@@ -197,11 +197,11 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/*/bundle/nsis/*.exe
-            artifacts/*/bundle/dmg/*.dmg
-            artifacts/*/bundle/macos/*.app.tar.gz
-            artifacts/*/bundle/deb/*.deb
-            artifacts/*/bundle/appimage/*.AppImage
+            artifacts/*-artifacts/**/*.exe
+            artifacts/*-artifacts/**/*.dmg
+            artifacts/*-artifacts/**/*.app.tar.gz
+            artifacts/*-artifacts/**/*.deb
+            artifacts/*-artifacts/**/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
