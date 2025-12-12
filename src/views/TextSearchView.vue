@@ -522,14 +522,23 @@ const jumpToLine = async (lineNumber: number) => {
       if (targetLineIndex >= 0 && targetLineIndex < lines.length) {
         let charPos = 0
         for (let i = 0; i < targetLineIndex; i++) {
-          charPos += lines[i].length + 1
+          charPos += lines[i].length
         }
         
         textarea.focus()
         textarea.setSelectionRange(charPos, charPos + lines[targetLineIndex].length)
         
-        const lineHeight = 20
-        const scrollTop = targetLineIndex * lineHeight - textarea.clientHeight / 2
+        const paddingTop = 12
+        const paddingBottom = 12
+        let lineHeight = 13 * 1.6
+        
+        // 动态计算行高，避免大文件累积误差
+        if (lines.length > 50) {
+          const contentHeight = textarea.scrollHeight - paddingTop - paddingBottom
+          lineHeight = contentHeight / lines.length
+        }
+        
+        const scrollTop = targetLineIndex * lineHeight + paddingTop - textarea.clientHeight / 2
         textarea.scrollTop = Math.max(0, scrollTop)
       }
     }
