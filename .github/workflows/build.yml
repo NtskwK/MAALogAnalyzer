@@ -214,7 +214,7 @@ jobs:
             ## 📦 下载说明
 
             ### Windows (x64)
-            - 下载 `.exe` 安装包
+            - 下载 `.msi` 安装包
 
             ### macOS (Intel 芯片)
             - 下载 `x86_64.dmg` 文件
@@ -234,9 +234,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/*-artifacts/**/*.exe
+            artifacts/*-artifacts/**/*.msi
             artifacts/*-artifacts/**/*.dmg
-            artifacts/*-artifacts/**/*.app.tar.gz
             artifacts/*-artifacts/**/*.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
