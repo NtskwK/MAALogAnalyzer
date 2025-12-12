@@ -43,6 +43,7 @@ const selectedLine = ref<number | null>(null)  // 当前选中的行
 const searchHistory = ref<string[]>([])  // 搜索历史
 const showFileContent = ref(false)  // 是否显示文件内容（默认关闭以节省内存）
 const contentKey = ref(0)  // 用于强制重新渲染，释放内存
+const hideDebugInfo = ref(true)  // 是否隐藏调试信息（如 [Px...][Tx...][...cpp]），默认隐藏
 let abortSearch = false  // 中断搜索标志
 
 // 新增：流式加载相关
@@ -59,6 +60,15 @@ const quickSearchOptions = [
   '[ERR]',
   'display_width_='
 ]
+
+// 调试信息正则：匹配 [Px数字][Tx数字][Lx数字][文件名.cpp] 等模式
+const DEBUG_INFO_PATTERN = /\[P[xX]\d+\]|\[T[xX]\d+\]|\[L\d+\]|\[[^\]]+\.(cpp|h|hpp|c)\]/gi
+
+// 过滤调试信息
+const filterDebugInfo = (line: string): string => {
+  if (!hideDebugInfo.value) return line
+  return line.replace(DEBUG_INFO_PATTERN, '').replace(/\s{2,}/g, ' ').trim()
+}
 
 // 搜索结果
 interface SearchResult {
@@ -412,6 +422,21 @@ const countLinesInFile = async (file: File): Promise<number> => {
 
 // 高亮显示匹配文本
 const highlightMatch = (result: SearchResult) => {
+  const filteredLine = filterDebugInfo(result.line)
+  // 如果过滤后内容变化，重新计算匹配位置
+  if (hideDebugInfo.value && filteredLine !== result.line) {
+    // 在过滤后的内容中重新查找匹配
+    const matchText = result.line.substring(result.matchStart, result.matchEnd)
+    const newMatchStart = filteredLine.indexOf(matchText)
+    if (newMatchStart !== -1) {
+      const before = filteredLine.substring(0, newMatchStart)
+      const match = matchText
+      const after = filteredLine.substring(newMatchStart + matchText.length)
+      return { before, match, after }
+    }
+    // 匹配内容被过滤掉了，返回整行
+    return { before: filteredLine, match: '', after: '' }
+  }
   const before = result.line.substring(0, result.matchStart)
   const match = result.line.substring(result.matchStart, result.matchEnd)
   const after = result.line.substring(result.matchEnd)
@@ -490,7 +515,7 @@ const fileLines = computed(() => {
   if (!fileContent.value) return []
   return fileContent.value.split('\n').map((line, index) => ({
     key: index,
-    content: line
+    content: filterDebugInfo(line)
   }))
 })
 
@@ -699,6 +724,9 @@ const loadContextLines = async (targetLine: number) => {
                 <n-checkbox v-model:checked="useRegex">
                   正则表达式
                 </n-checkbox>
+                <n-checkbox v-model:checked="hideDebugInfo">
+                  隐藏调试标签
+                </n-checkbox>
               </n-flex>
               
               <!-- 快捷搜索 -->
@@ -866,7 +894,7 @@ const loadContextLines = async (targetLine: number) => {
                       <span style="color: var(--n-text-color-disabled); margin-right: 12px; user-select: none">
                         {{ String(contextStartLine + idx).padStart(6, ' ') }}
                       </span>
-                      <span style="white-space: pre;">{{ line }}</span>
+                      <span style="white-space: pre;">{{ filterDebugInfo(line) }}</span>
                     </div>
                   </div>
                 </n-scrollbar>
