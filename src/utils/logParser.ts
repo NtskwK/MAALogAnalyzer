@@ -1,4 +1,4 @@
-import type { LogEntry, TaskInfo, NodeInfo, Statistics, PerformanceData } from '../types'
+import type { LogEntry, TaskInfo, NodeInfo, Statistics } from '../types'
 
 export class LogParser {
   private entries: LogEntry[] = []
@@ -287,72 +287,4 @@ export class LogParser {
     }
   }
 
-  getPerformanceData(): PerformanceData[] {
-    const operations = new Map<string, { durations: number[], count: number }>()
-
-    const tasks = this.getTasks()
-    for (const task of tasks) {
-      const pairs = new Map<string, { start?: string, end?: string }>()
-
-      for (const entry of task.entries) {
-        const msg = entry.message
-        const details = entry.details
-        const name = details.name || ''
-        
-        if (msg.includes('.Starting')) {
-          const key = `${msg.split('.')[1]}_${name}`
-          if (!pairs.has(key)) {
-            pairs.set(key, {})
-          }
-          pairs.get(key)!.start = entry.timestamp
-        } else if (msg.includes('.Succeeded') || msg.includes('.Failed')) {
-          const key = `${msg.split('.')[1]}_${name}`
-          if (pairs.has(key)) {
-            pairs.get(key)!.end = entry.timestamp
-          }
-        }
-      }
-
-      // 计算耗时
-      for (const [key, { start, end }] of pairs.entries()) {
-        if (start && end) {
-          const duration = this.calculateDuration(start, end)
-          if (duration >= 0) {
-            if (!operations.has(key)) {
-              operations.set(key, { durations: [], count: 0 })
-            }
-            const op = operations.get(key)!
-            op.durations.push(duration)
-            op.count++
-          }
-        }
-      }
-    }
-
-    const result: PerformanceData[] = []
-    for (const [operation, { durations, count }] of operations.entries()) {
-      const totalDuration = durations.reduce((a, b) => a + b, 0)
-      result.push({
-        operation,
-        duration: totalDuration,
-        count,
-        avgDuration: totalDuration / count
-      })
-    }
-
-    return result.sort((a, b) => b.duration - a.duration)
-  }
-
-  private calculateDuration(start: string, end: string): number {
-    try {
-      const startMs = new Date(start).getTime()
-      const endMs = new Date(end).getTime()
-      return (endMs - startMs) / 1000 // 转换为秒
-    } catch {
-      return -1
-    }
-  }
 }
-
-
-

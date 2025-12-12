@@ -5,4 +5,3 @@ import './style.css'
 const app = createApp(Index)
 
 app.mount('#app')
-

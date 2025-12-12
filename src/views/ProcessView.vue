@@ -195,4 +195,3 @@ const handleOperationClick = (node: NodeInfo, opIndex: number) => {
     </template>
   </n-card>
 </template>
-
