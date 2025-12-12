@@ -521,6 +521,7 @@ const fileLines = computed(() => {
 
 // 跳转到指定行
 const jumpToLine = async (lineNumber: number) => {
+  console.log(`🔍 jumpToLine 被调用: lineNumber=${lineNumber}`)
   selectedLine.value = lineNumber
   
   // 大文件模式：读取上下文
@@ -531,21 +532,52 @@ const jumpToLine = async (lineNumber: number) => {
   }
   
   // 小文件模式：显示文件内容
-  if (!showFileContent.value) {
+  const needsInitialRender = !showFileContent.value
+  console.log(`📄 小文件模式: needsInitialRender=${needsInitialRender}, showFileContent=${showFileContent.value}`)
+  
+  if (needsInitialRender) {
     showFileContent.value = true
   }
   
   // 使用虚拟列表定位
-  nextTick(() => {
-    const virtualList = document.querySelector('.n-virtual-list')
-    if (virtualList) {
-      // Naive UI Virtual List scrollTo implementation might vary, 
-      // but usually we can access the instance if we put a ref on it.
-      // For now, let's try to find the exposed method or use the index.
-      // Actually, NVirtualList exposes scrollTo. We need a ref.
-      virtualListRef.value?.scrollTo({ index: lineNumber - 1, behavior: 'auto' })
+  const itemSize = 22 // 与模板中的 :item-size="22" 保持一致
+  const topOffset = 3 // 让目标行距离顶部偏移 3 行，这样更容易看到上下文
+  
+  const scrollToLine = () => {
+    console.log(`📜 scrollToLine: virtualListRef.value =`, virtualListRef.value)
+    if (virtualListRef.value) {
+      // 使用像素计算进行精确滚动
+      // 目标：让选中行显示在距离顶部约 3 行的位置
+      const targetIndex = Math.max(0, lineNumber - 1 - topOffset)
+      const scrollTop = targetIndex * itemSize
+      
+      // 尝试找到内部的滚动容器并直接设置 scrollTop
+      const scrollContainer = virtualListRef.value.$el?.querySelector('.v-vl') as HTMLElement | null
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollTop
+        console.log(`✅ 直接设置 scrollTop = ${scrollTop}`)
+      } else {
+        // 回退：使用 scrollTo 方法
+        try {
+          virtualListRef.value.scrollTo({ index: targetIndex, behavior: 'auto' })
+          console.log(`✅ scrollTo({ index: ${targetIndex} }) 调用成功`)
+        } catch (e) {
+          console.error('scrollTo 失败:', e)
+        }
+      }
+    } else {
+      console.warn('⚠️ virtualListRef.value 为 null')
     }
-  })
+  }
+  
+  if (needsInitialRender) {
+    // 新渲染需要等待更长时间
+    console.log('⏳ 等待虚拟列表初次渲染...')
+    await nextTick()
+    setTimeout(scrollToLine, 150)
+  } else {
+    nextTick(scrollToLine)
+  }
 }
 
 const virtualListRef = ref<any>(null)
