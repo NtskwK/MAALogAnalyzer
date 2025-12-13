@@ -12,15 +12,7 @@ permissions:
 jobs:
   # 构建 Windows 版本
   build-windows:
-    strategy:
-      matrix:
-        include:
-          - arch: x86_64
-            runner: windows-latest
-          - arch: aarch64
-            runner: windows-11-arm
-      fail-fast: false
-    runs-on: ${{ matrix.runner }}
+    runs-on: windows-latest
 
     steps:
       - name: 检出代码
@@ -33,36 +25,6 @@ jobs:
 
       - name: 安装 Rust 稳定版
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.arch }}-pc-windows-msvc
-
-      - name: 缓存 Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-
-      - name: 手动安装 WiX (仅 ARM64)
-        if: matrix.arch == 'aarch64'
-        shell: pwsh
-        run: |
-          $ProgressPreference = 'SilentlyContinue'
-          $wixUrl = "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip"
-          $wixZip = "$env:TEMP\wix.zip"
-          $wixDir = "$env:USERPROFILE\.wix"
-          
-          Write-Host "Downloading WiX..."
-          Invoke-WebRequest -Uri $wixUrl -OutFile $wixZip -UseBasicParsing
-          
-          Write-Host "Extracting WiX..."
-          New-Item -ItemType Directory -Force -Path $wixDir | Out-Null
-          Expand-Archive -Path $wixZip -DestinationPath $wixDir -Force
-          
-          Write-Host "Setting environment variables..."
-          echo "$wixDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "WIX=$wixDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          
-          Write-Host "WiX installed to: $wixDir"
-          Get-ChildItem $wixDir | Select-Object -First 5
 
       - name: 安装 pnpm
         uses: pnpm/action-setup@v2
@@ -88,7 +50,7 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: windows-${{ matrix.arch }}-artifacts
+          name: windows-x86_64-artifacts
           path: src-tauri/target/release/bundle/
 
   # 构建 macOS 版本
@@ -243,8 +205,7 @@ jobs:
             ## 📦 下载说明
 
             ### Windows
-            - **x64**: 下载 `x64.msi` 安装包
-            - **ARM64**: 下载 `aarch64.msi` 安装包
+            - **x64**: 下载 `.msi` 安装包
 
             ### macOS
             - **Intel 芯片**: 下载 `x64.dmg` 文件
