@@ -107,10 +107,6 @@ jobs:
   # 构建 Linux 版本
   build-linux:
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        arch: [aarch64, x86_64]
-      fail-fast: false
 
     steps:
       - name: 检出代码
@@ -154,7 +150,7 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: linux-${{ matrix.arch }}-artifacts
+          name: linux-x86_64-artifacts
           path: src-tauri/target/release/bundle/
 
   # 生成 changelog
@@ -212,8 +208,7 @@ jobs:
             - **Apple Silicon (M1/M2/M3)**: 下载 `aarch64.dmg` 文件
 
             ### Linux
-            - **x64**: 下载 `amd64.deb` 文件
-            - **ARM64**: 下载 `arm64.deb` 文件
+            - **x64**: 下载 `.deb` 文件
 
             ## 📝 更新内容
             ${{ needs.changelog.outputs.release_body }}
