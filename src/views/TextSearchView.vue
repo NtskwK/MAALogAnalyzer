@@ -19,7 +19,8 @@ import {
   NScrollbar,
   NIcon,
   NSpin,
-  NVirtualList
+  NVirtualList,
+  NDivider
 } from 'naive-ui'
 import { parseLogLine } from '../utils/logHighlighter'
 import { SearchOutlined, FileTextOutlined, CloseOutlined } from '@vicons/antd'
