@@ -6,6 +6,7 @@
 
 ### 主要功能界面
 
+<!-- markdownlint-disable MD033 -->
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="img/1.png">
