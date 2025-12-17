@@ -86,7 +86,7 @@ const actionButtonType = computed(() => {
       <n-flex vertical style="gap: 8px">
         <!-- 所有识别尝试（包括失败的） -->
         <n-flex wrap style="gap: 8px 12px">
-          <template v-for="(attempt, idx) in node.recognition_attempts" :key="idx">
+          <template v-for="(attempt, idx) in node.recognition_attempts" :key="`attempt-${idx}`">
             <!-- 没有嵌套节点的识别尝试：直接显示按钮 -->
             <n-button
               v-if="!attempt.nested_nodes || attempt.nested_nodes.length === 0"
@@ -105,7 +105,7 @@ const actionButtonType = computed(() => {
             <!-- 有嵌套节点的识别尝试：显示嵌套结构 -->
             <template v-else>
               <!-- 展开状态：显示 card -->
-              <n-card v-if="expandedAttempts.has(idx)" size="small">
+              <n-card v-if="expandedAttempts.has(idx)" :key="`expanded-${idx}`" size="small">
                 <template #header>
                   <n-flex align="center" style="gap: 8px">
                     <n-button
@@ -145,7 +145,7 @@ const actionButtonType = computed(() => {
               </n-card>
 
               <!-- 折叠状态：显示按钮 + Show 按钮 -->
-              <n-flex v-else wrap style="gap: 8px 12px">
+              <n-flex v-else :key="`collapsed-${idx}`" wrap style="gap: 8px 12px">
                 <n-button
                   size="small"
                   :type="attempt.status === 'success' ? 'success' : 'warning'"

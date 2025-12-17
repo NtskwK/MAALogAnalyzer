@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import {
   NCard, NFlex, NScrollbar, NDescriptions, NDescriptionsItem,
-  NTag, NEmpty, NCode, NButton, NIcon, NText
+  NTag, NEmpty, NCode, NButton, NIcon, NText, NCollapse, NCollapseItem
 } from 'naive-ui'
 import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined } from '@vicons/antd'
 import type { NodeInfo, TaskInfo } from '../types'
@@ -91,32 +91,6 @@ const formatNextName = (item: any) => {
     <div style="padding: 20px">
       <n-flex vertical style="gap: 16px">
 
-      <!-- 任务信息（始终显示，如果有选中的任务） -->
-      <n-card title="📋 当前任务" v-if="selectedTask">
-        <n-descriptions :column="2" label-placement="left" size="small">
-          <n-descriptions-item label="任务入口">
-            <n-text strong>{{ selectedTask.entry }}</n-text>
-          </n-descriptions-item>
-          <n-descriptions-item label="任务状态">
-            <n-tag :type="selectedTask.status === 'succeeded' ? 'success' : selectedTask.status === 'failed' ? 'error' : 'warning'" size="small">
-              {{ selectedTask.status === 'succeeded' ? '成功' : selectedTask.status === 'failed' ? '失败' : '运行中' }}
-            </n-tag>
-          </n-descriptions-item>
-          <n-descriptions-item label="任务 ID">
-            {{ selectedTask.task_id }}
-          </n-descriptions-item>
-          <n-descriptions-item label="开始时间">
-            {{ selectedTask.start_time }}
-          </n-descriptions-item>
-          <n-descriptions-item label="结束时间" v-if="selectedTask.end_time">
-            {{ selectedTask.end_time }}
-          </n-descriptions-item>
-          <n-descriptions-item label="持续时间" v-if="selectedTask.duration">
-            {{ (selectedTask.duration / 1000).toFixed(2) }}s
-          </n-descriptions-item>
-        </n-descriptions>
-      </n-card>
-
       <!-- 未选择节点提示 -->
       <n-card v-if="!selectedNode" title="节点详情">
         <n-empty description="请点击左侧节点查看详情" />
@@ -125,8 +99,110 @@ const formatNextName = (item: any) => {
       <!-- 已选择节点 -->
       <template v-else>
 
-        <!-- 节点基本信息 -->
-        <n-card title="📍 节点详情">
+        <!-- 识别详情 (仅在点击识别尝试时显示) -->
+        <n-card v-if="hasRecognition && isRecognitionAttemptSelected" title="🔍 识别详情">
+          <n-descriptions :column="2" size="small" label-placement="left" bordered>
+            <n-descriptions-item label="识别 ID">
+              {{ currentRecognition?.reco_id }}
+            </n-descriptions-item>
+
+            <n-descriptions-item label="识别算法">
+              <n-tag size="small" type="info">
+                {{ currentRecognition?.algorithm || 'Unknown' }}
+              </n-tag>
+            </n-descriptions-item>
+
+            <n-descriptions-item label="节点名称">
+              {{ currentRecognition?.name }}
+            </n-descriptions-item>
+
+            <n-descriptions-item label="识别位置" v-if="currentRecognition?.box">
+              <n-text code>
+                [{{ currentRecognition.box.join(', ') }}]
+              </n-text>
+            </n-descriptions-item>
+          </n-descriptions>
+
+          <!-- 原始识别数据 (折叠) -->
+          <n-collapse style="margin-top: 16px">
+            <n-collapse-item title="原始识别数据" name="reco-json">
+              <template #header-extra>
+                <n-button
+                  size="tiny"
+                  @click.stop="copyToClipboard(formatJson(currentRecognition))"
+                >
+                  <template #icon>
+                    <n-icon><copy-outlined /></n-icon>
+                  </template>
+                  复制
+                </n-button>
+              </template>
+              <n-code
+                :code="formatJson(currentRecognition)"
+                language="json"
+                :word-wrap="true"
+                style="max-height: 400px; overflow: auto; max-width: 100%"
+              />
+            </n-collapse-item>
+          </n-collapse>
+        </n-card>
+
+        <!-- 动作详情 (仅在点击识别尝试时显示) -->
+        <n-card title="⚡ 动作详情" v-if="hasAction && isRecognitionAttemptSelected">
+          <n-descriptions :column="2" size="small" label-placement="left" bordered>
+            <n-descriptions-item label="动作 ID">
+              {{ selectedNode.action_details?.action_id }}
+            </n-descriptions-item>
+
+            <n-descriptions-item label="动作类型">
+              <n-tag size="small" :type="selectedNode.action_details?.action === 'DoNothing' ? 'default' : 'primary'">
+                {{ selectedNode.action_details?.action || 'Unknown' }}
+              </n-tag>
+            </n-descriptions-item>
+
+            <n-descriptions-item label="节点名称">
+              {{ selectedNode.action_details?.name }}
+            </n-descriptions-item>
+
+            <n-descriptions-item label="执行结果">
+              <n-tag :type="selectedNode.action_details?.success ? 'success' : 'error'" size="small">
+                {{ selectedNode.action_details?.success ? '成功' : '失败' }}
+              </n-tag>
+            </n-descriptions-item>
+
+            <n-descriptions-item label="目标位置" :span="2" v-if="selectedNode.action_details?.box">
+              <n-text code>
+                [{{ selectedNode.action_details.box.join(', ') }}]
+              </n-text>
+            </n-descriptions-item>
+          </n-descriptions>
+
+          <!-- 原始动作数据 (折叠) -->
+          <n-collapse style="margin-top: 16px">
+            <n-collapse-item title="原始动作数据" name="action-json">
+              <template #header-extra>
+                <n-button
+                  size="tiny"
+                  @click.stop="copyToClipboard(formatJson(selectedNode.action_details))"
+                >
+                  <template #icon>
+                    <n-icon><copy-outlined /></n-icon>
+                  </template>
+                  复制
+                </n-button>
+              </template>
+              <n-code
+                :code="formatJson(selectedNode.action_details)"
+                language="json"
+                :word-wrap="true"
+                style="max-height: 400px; overflow: auto; max-width: 100%"
+              />
+            </n-collapse-item>
+          </n-collapse>
+        </n-card>
+
+        <!-- 节点详情 (仅在点击节点名称时显示) -->
+        <n-card title="📍 节点详情" v-if="!isRecognitionAttemptSelected">
           <n-descriptions :column="1" label-placement="left">
             <n-descriptions-item label="节点名称">
               <n-flex align="center" style="gap: 8px">
@@ -156,134 +232,8 @@ const formatNextName = (item: any) => {
           </n-descriptions>
         </n-card>
 
-        <!-- 识别详情 -->
-        <n-card v-if="hasRecognition">
-          <template #header>
-            <n-flex align="center" style="gap: 8px">
-              <span>🔍 识别详情</span>
-              <n-tag v-if="isRecognitionAttemptSelected" size="small" type="warning">
-                识别尝试 #{{ selectedRecognitionIndex! + 1 }}
-              </n-tag>
-            </n-flex>
-          </template>
-
-          <n-descriptions :column="2" size="small" label-placement="left" bordered>
-            <n-descriptions-item label="识别 ID">
-              {{ currentRecognition?.reco_id }}
-            </n-descriptions-item>
-
-            <n-descriptions-item label="识别算法">
-              <n-tag size="small" type="info">
-                {{ currentRecognition?.algorithm || 'Unknown' }}
-              </n-tag>
-            </n-descriptions-item>
-
-            <n-descriptions-item label="节点名称">
-              {{ currentRecognition?.name }}
-            </n-descriptions-item>
-
-            <n-descriptions-item label="识别位置" v-if="currentRecognition?.box">
-              <n-text code>
-                [{{ currentRecognition.box.join(', ') }}]
-              </n-text>
-            </n-descriptions-item>
-          </n-descriptions>
-
-          <!-- 原始识别数据 -->
-          <div style="margin-top: 16px">
-            <n-flex justify="space-between" align="center" style="margin-bottom: 8px">
-              <n-text strong>原始识别数据</n-text>
-              <n-button
-                size="tiny"
-                @click="copyToClipboard(formatJson(currentRecognition))"
-              >
-                <template #icon>
-                  <n-icon><copy-outlined /></n-icon>
-                </template>
-                复制
-              </n-button>
-            </n-flex>
-            <n-code
-              :code="formatJson(currentRecognition)"
-              language="json"
-              :word-wrap="true"
-              style="max-height: 400px; overflow: auto; max-width: 100%"
-            />
-          </div>
-        </n-card>
-
-        <!-- 节点最终动作 -->
-        <n-card title="⚡ 节点最终动作" v-if="hasAction">
-          <n-descriptions :column="2" size="small" label-placement="left" bordered>
-            <n-descriptions-item label="动作 ID">
-              {{ selectedNode.action_details?.action_id }}
-            </n-descriptions-item>
-
-            <n-descriptions-item label="动作类型">
-              <n-tag size="small" :type="selectedNode.action_details?.action === 'DoNothing' ? 'default' : 'primary'">
-                {{ selectedNode.action_details?.action || 'Unknown' }}
-              </n-tag>
-            </n-descriptions-item>
-
-            <n-descriptions-item label="节点名称">
-              {{ selectedNode.action_details?.name }}
-            </n-descriptions-item>
-
-            <n-descriptions-item label="执行结果">
-              <n-tag :type="selectedNode.action_details?.success ? 'success' : 'error'" size="small">
-                {{ selectedNode.action_details?.success ? '成功' : '失败' }}
-              </n-tag>
-            </n-descriptions-item>
-
-            <n-descriptions-item label="目标位置" :span="2" v-if="selectedNode.action_details?.box">
-              <n-text code>
-                [{{ selectedNode.action_details.box.join(', ') }}]
-              </n-text>
-            </n-descriptions-item>
-          </n-descriptions>
-
-          <!-- 原始动作数据 -->
-          <div style="margin-top: 16px">
-            <n-flex justify="space-between" align="center" style="margin-bottom: 8px">
-              <n-text strong>原始动作数据</n-text>
-              <n-button
-                size="tiny"
-                @click="copyToClipboard(formatJson(selectedNode.action_details))"
-              >
-                <template #icon>
-                  <n-icon><copy-outlined /></n-icon>
-                </template>
-                复制
-              </n-button>
-            </n-flex>
-            <n-code
-              :code="formatJson(selectedNode.action_details)"
-              language="json"
-              :word-wrap="true"
-              style="max-height: 400px; overflow: auto; max-width: 100%"
-            />
-          </div>
-        </n-card>
-
-        <!-- Next 列表 -->
-        <n-card title="→ Next 列表" v-if="selectedNode.next_list && selectedNode.next_list.length > 0">
-          <n-flex wrap style="gap: 8px">
-            <n-tag
-              v-for="(next, idx) in selectedNode.next_list"
-              :key="idx"
-              :type="next.anchor ? 'success' : next.jump_back ? 'warning' : 'info'"
-              size="medium"
-            >
-              {{ formatNextName(next) }}
-            </n-tag>
-          </n-flex>
-          <n-text depth="3" style="margin-top: 12px; display: block; font-size: 12px">
-            共 {{ selectedNode.next_list.length }} 个候选节点
-          </n-text>
-        </n-card>
-
-        <!-- 节点详细信息 -->
-        <n-card title="📋 节点详细信息" v-if="selectedNode.node_details">
+        <!-- 节点详细信息 (仅在点击节点名称时显示) -->
+        <n-card title="📋 节点详细信息" v-if="!isRecognitionAttemptSelected && selectedNode.node_details">
           <n-descriptions :column="2" size="small" label-placement="left" bordered>
             <n-descriptions-item label="节点 ID">
               {{ selectedNode.node_details.node_id }}
@@ -309,26 +259,29 @@ const formatNextName = (item: any) => {
           </n-descriptions>
         </n-card>
 
-        <!-- 完整节点数据 -->
-        <n-card title="📄 完整节点数据">
-          <n-flex justify="space-between" align="center" style="margin-bottom: 8px">
-            <n-text strong>原始 JSON 数据</n-text>
-            <n-button
-              size="tiny"
-              @click="copyToClipboard(formatJson(selectedNode))"
-            >
-              <template #icon>
-                <n-icon><copy-outlined /></n-icon>
+        <!-- 完整节点数据 (仅在点击节点名称时显示) -->
+        <n-card title="📄 完整节点数据" v-if="!isRecognitionAttemptSelected">
+          <n-collapse>
+            <n-collapse-item title="原始 JSON 数据" name="node-json">
+              <template #header-extra>
+                <n-button
+                  size="tiny"
+                  @click.stop="copyToClipboard(formatJson(selectedNode))"
+                >
+                  <template #icon>
+                    <n-icon><copy-outlined /></n-icon>
+                  </template>
+                  复制
+                </n-button>
               </template>
-              复制
-            </n-button>
-          </n-flex>
-          <n-code
-            :code="formatJson(selectedNode)"
-            language="json"
-            :word-wrap="true"
-            style="max-height: 500px; overflow: auto; max-width: 100%"
-          />
+              <n-code
+                :code="formatJson(selectedNode)"
+                language="json"
+                :word-wrap="true"
+                style="max-height: 500px; overflow: auto; max-width: 100%"
+              />
+            </n-collapse-item>
+          </n-collapse>
         </n-card>
 
       </template>

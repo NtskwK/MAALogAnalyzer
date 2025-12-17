@@ -202,22 +202,13 @@ const handleSelectNested = (node: NodeInfo, attemptIndex: number, nestedIndex: n
     </n-card>
     
     <!-- 主内容区域 -->
-    <div style="flex: 1; min-height: 0; position: relative">
-      <!-- 日志分析区域 -->
-      <div 
-        v-show="viewMode === 'analysis' || viewMode === 'split'"
-        :style="{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: viewMode === 'split' ? '50%' : '100%'
-        }"
-      >
-        <n-split 
-          v-model:size="splitSize" 
-          :max="0.8" 
-          :min="0.4" 
+    <div style="flex: 1; min-height: 0">
+      <!-- 日志分析模式 -->
+      <div v-if="viewMode === 'analysis'" style="height: 100%">
+        <n-split
+          v-model:size="splitSize"
+          :max="0.8"
+          :min="0.4"
           style="height: 100%"
         >
           <template #1>
@@ -244,20 +235,59 @@ const handleSelectNested = (node: NodeInfo, attemptIndex: number, nestedIndex: n
           </template>
         </n-split>
       </div>
-      
-      <!-- 文本搜索区域 -->
-      <div 
-        v-show="viewMode === 'search' || viewMode === 'split'"
-        :style="{
-          position: 'absolute',
-          top: viewMode === 'split' ? '50%' : '0',
-          left: 0,
-          right: 0,
-          bottom: 0
-        }"
-      >
+
+      <!-- 文本搜索模式 -->
+      <div v-else-if="viewMode === 'search'" style="height: 100%">
         <text-search-view :is-dark="isDark" style="height: 100%" />
       </div>
+
+      <!-- 分屏模式 -->
+      <n-split
+        v-else-if="viewMode === 'split'"
+        direction="vertical"
+        :default-size="0.5"
+        :min="0.2"
+        :max="0.8"
+        style="height: 100%"
+      >
+        <!-- 上半部分：日志分析 -->
+        <template #1>
+          <n-split
+            v-model:size="splitSize"
+            :max="0.8"
+            :min="0.4"
+            style="height: 100%"
+          >
+            <template #1>
+              <process-view
+                :tasks="tasks"
+                :selected-task="selectedTask"
+                :loading="loading"
+                :parser="parser"
+                @select-task="handleSelectTask"
+                @upload-file="handleFileUpload"
+                @upload-content="handleContentUpload"
+                @select-node="handleSelectNode"
+                @select-recognition="handleSelectRecognition"
+                @select-nested="handleSelectNested"
+              />
+            </template>
+            <template #2>
+              <detail-view
+                :selected-node="selectedNode"
+                :selected-task="selectedTask"
+                :selected-recognition-index="selectedRecognitionIndex"
+                :selected-nested-index="selectedNestedIndex"
+              />
+            </template>
+          </n-split>
+        </template>
+
+        <!-- 下半部分：文本搜索 -->
+        <template #2>
+          <text-search-view :is-dark="isDark" style="height: 100%" />
+        </template>
+      </n-split>
     </div>
     
     <!-- 关于对话框 -->
