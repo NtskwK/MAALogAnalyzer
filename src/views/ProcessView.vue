@@ -9,6 +9,7 @@ import NodeCard from '../components/NodeCard.vue'
 import type { TaskInfo, NodeInfo } from '../types'
 import type { LogParser } from '../utils/logParser'
 import { isTauri, openLogFileDialog } from '../utils/fileDialog'
+import { formatDuration } from '../utils/formatDuration'
 
 const props = defineProps<{
   tasks: TaskInfo[]
@@ -204,7 +205,7 @@ const handleNestedClick = (node: NodeInfo, attemptIndex: number, nestedIndex: nu
                         节点: {{ task.nodes.length }} 个
                       </n-text>
                       <n-text depth="3" style="font-size: 12px" v-if="task.duration">
-                        耗时: {{ (task.duration / 1000).toFixed(2) }}s
+                        耗时: {{ formatDuration(task.duration) }}
                       </n-text>
                     </n-flex>
                   </n-flex>

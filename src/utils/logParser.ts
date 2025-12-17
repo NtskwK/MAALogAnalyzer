@@ -328,6 +328,14 @@ export class LogParser {
     // 为每个任务提取节点信息
     for (const task of tasks) {
       task.nodes = this.getTaskNodes(task)
+
+      // 为运行中的任务计算耗时（使用最后一个节点的时间戳）
+      if (task.status === 'running' && task.nodes.length > 0) {
+        const lastNode = task.nodes[task.nodes.length - 1]
+        const start = new Date(task.start_time).getTime()
+        const end = new Date(lastNode.timestamp).getTime()
+        task.duration = end - start
+      }
     }
 
     // 清除事件数组，释放内存
