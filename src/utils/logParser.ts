@@ -421,9 +421,9 @@ export class LogParser {
       // 当遇到 PipelineNode.Succeeded 或 Failed 时，创建节点并关联识别历史
       if ((message === 'Node.PipelineNode.Succeeded' || message === 'Node.PipelineNode.Failed')
           && details.task_id === task.task_id) {
-        // 使用 details.name 作为节点名称（上下文节点）
-        // 上下文节点包含 NextList，尝试识别候选节点，并执行匹配节点的动作
-        const nodeName = details.name || details.node_details?.name || ''
+        // 优先使用 node_details.name（实际执行的节点名称）
+        // 如果没有，再使用 details.name（上下文节点名称）
+        const nodeName = details.node_details?.name || details.name || ''
 
         // 获取自上一个 PipelineNode 以来收集的所有识别尝试
         // （包括常规 Recognition 事件和嵌套的 RecognitionNode 事件）
