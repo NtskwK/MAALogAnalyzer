@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   NCard, NButton, NUpload, NUploadDragger, NIcon, NText, NFlex,
   NScrollbar, NEmpty, NBadge, NTag, NSplit, NList, NListItem, type UploadFileInfo
@@ -51,6 +51,76 @@ const toggleTaskList = () => {
     taskListSavedSize.value = taskListSize.value
     taskListSize.value = 0
     taskListCollapsed.value = true
+  }
+}
+
+// 根据节点详情折叠状态动态调整任务列表宽度
+watch(() => props.detailViewCollapsed, (detailCollapsed) => {
+  // 只在任务列表未折叠时调整宽度
+  if (!taskListCollapsed.value) {
+    if (detailCollapsed) {
+      // 节点详情折叠，使用较小宽度
+      taskListSize.value = 0.15
+      taskListSavedSize.value = 0.15
+    } else {
+      // 节点详情展开，使用较大宽度
+      taskListSize.value = 0.25
+      taskListSavedSize.value = 0.25
+    }
+  }
+})
+
+// 节点导航折叠状态
+const nodeNavCollapsed = ref(false)
+const nodeNavSize = ref(0.2)
+const nodeNavSavedSize = ref(0.2)
+
+// 切换节点导航折叠状态
+const toggleNodeNav = () => {
+  if (nodeNavCollapsed.value) {
+    // 展开：恢复保存的大小
+    nodeNavSize.value = nodeNavSavedSize.value
+    nodeNavCollapsed.value = false
+  } else {
+    // 折叠：保存当前大小，然后完全隐藏
+    nodeNavSavedSize.value = nodeNavSize.value
+    nodeNavSize.value = 0
+    nodeNavCollapsed.value = true
+  }
+}
+
+// 根据两侧折叠状态动态调整节点导航宽度
+watch([taskListCollapsed, () => props.detailViewCollapsed], ([taskCollapsed, detailCollapsed]) => {
+  // 只在节点导航未折叠时调整宽度
+  if (!nodeNavCollapsed.value) {
+    if (taskCollapsed && detailCollapsed) {
+      // 两侧都折叠，使用较小宽度
+      nodeNavSize.value = 0.12
+      nodeNavSavedSize.value = 0.12
+    } else {
+      // 至少有一侧展开，使用较大宽度
+      nodeNavSize.value = 0.2
+      nodeNavSavedSize.value = 0.2
+    }
+  }
+})
+
+// 节点卡片引用
+const nodeScrollbar = ref<InstanceType<typeof NScrollbar> | null>(null)
+const nodeCardRefs = ref<any[]>([])
+
+// 设置节点卡片引用
+const setNodeCardRef = (el: any, index: number) => {
+  if (el) {
+    nodeCardRefs.value[index] = el
+  }
+}
+
+// 滚动到指定节点
+const scrollToNode = (index: number) => {
+  const cardEl = nodeCardRefs.value[index]
+  if (cardEl && cardEl.$el) {
+    cardEl.$el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 }
 
@@ -291,21 +361,101 @@ const handleNestedClick = (node: NodeInfo, attemptIndex: number, nestedIndex: nu
               </template>
             </n-button>
 
-            <n-scrollbar style="height: 100%; max-height: 100%">
-              <div v-if="currentNodes.length === 0" style="padding: 40px 0">
-                <n-empty description="暂无节点数据" />
-              </div>
-              <n-flex vertical v-else style="gap: 16px; padding: 12px">
-                <node-card
-                  v-for="node in currentNodes"
-                  :key="`${node.task_id}-${node.node_id}`"
-                  :node="node"
-                  @select-node="handleNodeClick"
-                  @select-recognition="handleRecognitionClick"
-                  @select-nested="handleNestedClick"
-                />
-              </n-flex>
-            </n-scrollbar>
+            <!-- 节点导航和详情的分栏布局 -->
+            <n-split
+              direction="horizontal"
+              v-model:size="nodeNavSize"
+              :min="0"
+              :max="0.4"
+              style="height: 100%"
+            >
+              <!-- 左侧：节点导航列表 -->
+              <template #1>
+                <n-card size="small" title="节点导航" style="height: 100%; display: flex; flex-direction: column; position: relative" content-style="padding: 0; flex: 1; min-height: 0; overflow: hidden">
+                  <!-- 折叠按钮 - 右边缘中间 -->
+                  <n-button
+                    circle
+                    size="small"
+                    @click="toggleNodeNav"
+                    style="position: absolute; right: -12px; top: 50%; transform: translateY(-50%); z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15)"
+                  >
+                    <template #icon>
+                      <n-icon>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <!-- 展开时显示向左箭头，表示点击后向左折叠 -->
+                          <path fill="currentColor" d="M15.41 7.41L14 6l-6 6l6 6l1.41-1.41L10.83 12z"/>
+                        </svg>
+                      </n-icon>
+                    </template>
+                  </n-button>
+                  <n-scrollbar style="height: 100%; max-height: 100%">
+                    <n-list hoverable clickable v-if="currentNodes.length > 0">
+                      <n-list-item
+                        v-for="(node, index) in currentNodes"
+                        :key="`nav-${node.task_id}-${node.node_id}`"
+                        @click="scrollToNode(index)"
+                        :style="{
+                          cursor: 'pointer',
+                          padding: '8px 12px'
+                        }"
+                      >
+                        <n-flex vertical style="gap: 4px">
+                          <n-text strong style="font-size: 13px">{{ node.name || '未命名节点' }}</n-text>
+                          <n-flex align="center" style="gap: 8px">
+                            <n-tag size="small" :type="node.status === 'success' ? 'success' : 'error'">
+                              {{ node.status === 'success' ? '成功' : '失败' }}
+                            </n-tag>
+                            <n-text depth="3" style="font-size: 11px">
+                              #{{ index + 1 }}
+                            </n-text>
+                          </n-flex>
+                        </n-flex>
+                      </n-list-item>
+                    </n-list>
+                  </n-scrollbar>
+                </n-card>
+              </template>
+
+              <!-- 右侧：节点详细卡片 -->
+              <template #2>
+                <div style="height: 100%; display: flex; flex-direction: column; position: relative">
+                  <!-- 展开节点导航按钮（仅在节点导航折叠时显示） -->
+                  <n-button
+                    v-if="nodeNavCollapsed"
+                    circle
+                    size="small"
+                    @click="toggleNodeNav"
+                    style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15)"
+                  >
+                    <template #icon>
+                      <n-icon>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <!-- 折叠时显示向右箭头，表示点击后从左侧展开 -->
+                          <path fill="currentColor" d="M8.59 16.59L10 18l6-6l-6-6l-1.41 1.41L13.17 12z"/>
+                        </svg>
+                      </n-icon>
+                    </template>
+                  </n-button>
+
+                  <n-scrollbar ref="nodeScrollbar" style="height: 100%; max-height: 100%">
+                    <div v-if="currentNodes.length === 0" style="padding: 40px 0">
+                      <n-empty description="暂无节点数据" />
+                    </div>
+                    <n-flex vertical v-else style="gap: 16px; padding: 12px">
+                      <node-card
+                        v-for="(node, index) in currentNodes"
+                        :key="`${node.task_id}-${node.node_id}`"
+                        :ref="el => setNodeCardRef(el, index)"
+                        :node="node"
+                        @select-node="handleNodeClick"
+                        @select-recognition="handleRecognitionClick"
+                        @select-nested="handleNestedClick"
+                      />
+                    </n-flex>
+                  </n-scrollbar>
+                </div>
+              </template>
+            </n-split>
           </n-card>
         </template>
       </n-split>
