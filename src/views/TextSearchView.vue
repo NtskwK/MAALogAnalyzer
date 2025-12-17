@@ -694,6 +694,7 @@ const loadContextLines = async (targetLine: number) => {
                   clearable
                   @keyup.enter="performSearch"
                   :disabled="isSearching"
+                  :input-props="{ id: 'text-search-input', name: 'text-search-input' }"
                 >
                   <template #prefix>
                     <search-outlined />
