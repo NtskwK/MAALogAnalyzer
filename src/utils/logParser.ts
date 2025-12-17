@@ -371,10 +371,10 @@ export class LogParser {
           recognitionAttempts.push(attempt)
           // 清空嵌套节点数组
           nestedNodes.length = 0
-        } else {
-          // 其他任务的 Recognition 事件，清空嵌套节点数组以防止跨任务污染
-          nestedNodes.length = 0
         }
+        // 注意:不要清空 nestedNodes!
+        // RecognitionNode 内部的 Recognition 事件 (不同 task_id) 不应该触发清空
+        // 只有当前任务的 Recognition 事件才会清空 nestedNodes
       }
 
       // 当遇到 PipelineNode.Succeeded 或 Failed 时，创建节点并关联识别历史
