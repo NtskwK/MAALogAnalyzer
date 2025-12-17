@@ -76,14 +76,6 @@ const formatJson = (obj: any) => {
 const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text)
 }
-
-// 格式化 Next 列表项名称
-const formatNextName = (item: any) => {
-  let prefix = ''
-  if (item.jump_back) prefix += '[JumpBack]'
-  if (item.anchor) prefix += '[Anchor]'
-  return prefix ? `${prefix} ${item.name}` : item.name
-}
 </script>
 
 <template>

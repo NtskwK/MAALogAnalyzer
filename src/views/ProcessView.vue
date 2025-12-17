@@ -223,7 +223,7 @@ const handleNestedClick = (node: NodeInfo, attemptIndex: number, nestedIndex: nu
               </div>
               <n-flex vertical v-else style="gap: 16px; padding: 12px">
                 <node-card
-                  v-for="(node, idx) in currentNodes"
+                  v-for="node in currentNodes"
                   :key="`${node.task_id}-${node.node_id}`"
                   :node="node"
                   @select-node="handleNodeClick"
