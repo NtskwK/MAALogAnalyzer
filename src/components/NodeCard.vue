@@ -14,8 +14,8 @@ const emit = defineEmits<{
   'select-nested': [node: NodeInfo, attemptIndex: number, nestedIndex: number]
 }>()
 
-// 跟踪哪些识别尝试的嵌套节点是展开的
-const expandedAttempts = ref<Set<number>>(new Set())
+// 跟踪哪些识别尝试的嵌套节点是展开的（使用 Map 优化性能）
+const expandedAttempts = ref<Map<number, boolean>>(new Map())
 
 // 节点状态样式
 const cardClass = computed(() => {
@@ -37,15 +37,15 @@ const handleNestedClick = (attemptIndex: number, nestedIndex: number) => {
   emit('select-nested', props.node, attemptIndex, nestedIndex)
 }
 
-// 切换嵌套节点的显示/隐藏
+// 切换嵌套节点的显示/隐藏（优化：避免创建新对象）
 const toggleNestedNodes = (attemptIndex: number) => {
-  const next = new Set(expandedAttempts.value)
-  if (next.has(attemptIndex)) {
-    next.delete(attemptIndex)
-  } else {
-    next.add(attemptIndex)
-  }
-  expandedAttempts.value = next
+  const current = expandedAttempts.value.get(attemptIndex)
+  expandedAttempts.value.set(attemptIndex, !current)
+}
+
+// 检查节点是否展开
+const isExpanded = (attemptIndex: number) => {
+  return expandedAttempts.value.get(attemptIndex) || false
 }
 
 // 格式化 Next 列表项名称
@@ -105,7 +105,7 @@ const actionButtonType = computed(() => {
             <!-- 有嵌套节点的识别尝试：显示嵌套结构 -->
             <template v-else>
               <!-- 展开状态：显示 card -->
-              <n-card v-if="expandedAttempts.has(idx)" :key="`expanded-${idx}`" size="small">
+              <n-card v-if="isExpanded(idx)" :key="`expanded-${idx}`" size="small">
                 <template #header>
                   <n-flex align="center" style="gap: 8px">
                     <n-button

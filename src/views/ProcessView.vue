@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import {
   NCard, NButton, NUpload, NUploadDragger, NIcon, NText, NFlex,
   NScrollbar, NEmpty, NBadge, NTag, NSplit, NList, NListItem, type UploadFileInfo
 } from 'naive-ui'
 import { CloudUploadOutlined, FolderOpenOutlined } from '@vicons/antd'
+import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import NodeCard from '../components/NodeCard.vue'
 import type { TaskInfo, NodeInfo } from '../types'
 import type { LogParser } from '../utils/logParser'
@@ -116,11 +118,22 @@ const setNodeCardRef = (el: any, index: number) => {
   }
 }
 
-// 滚动到指定节点
+// 滚动到指定节点（虚拟滚动版本）
 const scrollToNode = (index: number) => {
-  const cardEl = nodeCardRefs.value[index]
-  if (cardEl && cardEl.$el) {
-    cardEl.$el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  if (virtualScroller.value) {
+    // 对于动态高度的虚拟滚动，需要多次调用以确保准确滚动
+    // 第一次滚动
+    virtualScroller.value.scrollToItem(index)
+
+    // 等待渲染后再次调整位置，确保准确
+    setTimeout(() => {
+      virtualScroller.value?.scrollToItem(index)
+    }, 100)
+
+    // 再次确认，处理复杂的动态高度情况
+    setTimeout(() => {
+      virtualScroller.value?.scrollToItem(index)
+    }, 300)
   }
 }
 
@@ -129,6 +142,9 @@ const currentNodes = computed<NodeInfo[]>(() => {
   if (!props.selectedTask) return []
   return props.selectedTask.nodes || []
 })
+
+// 虚拟滚动引用
+const virtualScroller = ref<InstanceType<typeof DynamicScroller> | null>(null)
 
 // 切换任务
 const handleTabChange = (index: number) => {
@@ -437,22 +453,40 @@ const handleNestedClick = (node: NodeInfo, attemptIndex: number, nestedIndex: nu
                     </template>
                   </n-button>
 
-                  <n-scrollbar ref="nodeScrollbar" style="height: 100%; max-height: 100%">
-                    <div v-if="currentNodes.length === 0" style="padding: 40px 0">
-                      <n-empty description="暂无节点数据" />
-                    </div>
-                    <n-flex vertical v-else style="gap: 16px; padding: 12px">
-                      <node-card
-                        v-for="(node, index) in currentNodes"
-                        :key="`${node.task_id}-${node.node_id}`"
-                        :ref="el => setNodeCardRef(el, index)"
-                        :node="node"
-                        @select-node="handleNodeClick"
-                        @select-recognition="handleRecognitionClick"
-                        @select-nested="handleNestedClick"
-                      />
-                    </n-flex>
-                  </n-scrollbar>
+                  <div v-if="currentNodes.length === 0" style="padding: 40px 0">
+                    <n-empty description="暂无节点数据" />
+                  </div>
+                  <DynamicScroller
+                    v-else
+                    ref="virtualScroller"
+                    :items="currentNodes"
+                    :min-item-size="150"
+                    key-field="node_id"
+                    class="virtual-scroller"
+                    style="height: 100%"
+                  >
+                    <template #default="{ item, index, active }">
+                      <DynamicScrollerItem
+                        :item="item"
+                        :active="active"
+                        :data-index="index"
+                        :size-dependencies="[
+                          item.recognition_attempts?.length,
+                          item.next_list?.length,
+                          item.action_details
+                        ]"
+                      >
+                        <div style="padding: 12px">
+                          <node-card
+                            :node="item"
+                            @select-node="handleNodeClick"
+                            @select-recognition="handleRecognitionClick"
+                            @select-nested="handleNestedClick"
+                          />
+                        </div>
+                      </DynamicScrollerItem>
+                    </template>
+                  </DynamicScroller>
                 </div>
               </template>
             </n-split>
