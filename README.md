@@ -19,8 +19,8 @@ _✨ 可视化分析基于 MAAFramework 开发应用的日志 ✨_</br>
   <a href="https://tauri.app/" target="_blank"><img alt="tauri" src="https://img.shields.io/badge/Tauri 2-FFC131?logo=tauri&logoColor=000"></a>
   <br/>
   <a href="https://github.com/Windsland52/MAALogAnalyzer/blob/main/LICENSE" target="_blank"><img alt="license" src="https://img.shields.io/github/license/Windsland52/MAALogAnalyzer"></a>
-  <a href="https://github.com/Windsland52/MAALogAnalyzer/stargazers" target="_blank"><img alt="stars" src="https://img.shields.io/github/stars/Windsland52/MAALogAnalyzer?style=social"></a>
   <a href="https://github.com/Windsland52/MAALogAnalyzer/commits/main/" target="_blank"><img alt="commits" src="https://img.shields.io/github/commit-activity/m/Windsland52/MAALogAnalyzer?color=%23ff69b4"></a>
+  <a href="https://github.com/Windsland52/MAALogAnalyzer/stargazers" target="_blank"><img alt="stars" src="https://img.shields.io/github/stars/Windsland52/MAALogAnalyzer?style=social"></a>
 </p>
 
 <div align="center">
